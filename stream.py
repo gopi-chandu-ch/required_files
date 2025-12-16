@@ -3,26 +3,32 @@ import io
 import time
 import requests
 from PIL import Image
+import socket
+import uuid
 
 # =========================
 # CONFIGURATION
 # =========================
 SERVER_URL = "https://stream-au39.onrender.com/upload"
-FPS = 10
-JPEG_QUALITY = 70
+FPS = 12                    # 12–20 = smooth motion
+JPEG_QUALITY = 60
 TIMEOUT = 5
 
+# Unique stream ID (auto-generated)
+STREAM_ID = f"{socket.gethostname()}_{uuid.uuid4().hex[:6]}"
+
 print("📡 Screen streaming client started...")
+print(f"🆔 Stream ID: {STREAM_ID}")
 print(f"➡️ Sending frames to: {SERVER_URL}")
 
 # =========================
 # SCREEN CAPTURE FUNCTION
 # =========================
 def capture_screen():
-    """
-    Capture the current screen and return JPEG bytes
-    """
     screenshot = pyautogui.screenshot()
+
+    # Optional: resize for speed (recommended)
+    screenshot = screenshot.resize((1280, 720))
 
     buffer = io.BytesIO()
     screenshot.save(buffer, format="JPEG", quality=JPEG_QUALITY)
@@ -41,9 +47,14 @@ while True:
             "frame": ("screen.jpg", frame, "image/jpeg")
         }
 
+        data = {
+            "stream_id": STREAM_ID
+        }
+
         response = requests.post(
             SERVER_URL,
             files=files,
+            data=data,
             timeout=TIMEOUT
         )
 
